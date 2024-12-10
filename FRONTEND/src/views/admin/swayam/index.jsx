@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { Send, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 
-import SwayamImage from '../../../assets/SWAYAMAI.png';
-import SwayamGif from '../../../assets/SWAYAMAI.gif';
-
+import SwayamImage from "../../../assets/SWAYAMAI.png";
+import SwayamGif from "../../../assets/SWAYAMAI.gif";
 
 function Swayam() {
   const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -19,12 +18,17 @@ function Swayam() {
 
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
   useEffect(() => {
-    if (messages.length > 0 && messages[messages.length - 1].role === 'assistant' && speechEnabled) {
+    if (
+      messages.length > 0 &&
+      messages[messages.length - 1].role === "assistant" &&
+      speechEnabled
+    ) {
       const message = messages[messages.length - 1].content;
       const containsMalayalam = /[\u0D00-\u0D7F]/.test(message);
       speakText(message, containsMalayalam);
@@ -34,53 +38,59 @@ function Swayam() {
   const speakText = async (text, isMalayalam) => {
     if (isMalayalam) {
       try {
-        const audio = new Audio();
-        const encodedText = encodeURIComponent(text);
-        audio.src = `http://localhost:5001/api/text-to-speech?text=${encodedText}&lang=ml`;
-        
+        const response = await fetch('http://localhost:5001/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        });
+  
+        const data = await response.json();
+  
+        if (!data.audioUrl) {
+          throw new Error('No audio URL received from backend');
+        }
+  
+        const audio = new Audio(data.audioUrl);
+  
         audio.onplay = () => setIsSpeaking(true);
         audio.onended = () => setIsSpeaking(false);
         audio.onerror = () => {
           setIsSpeaking(false);
-          fallbackToWebSpeech();
+          console.error('Error playing TTS audio');
         };
-        
+  
         await audio.play();
       } catch (error) {
-        console.error('Failed to use TTS service:', error);
-        fallbackToWebSpeech();
+        console.error('Failed to use TTS service:', error.message);
       }
     } else {
       fallbackToWebSpeech();
     }
-
+  
     function fallbackToWebSpeech() {
       speechSynthesisRef.current.cancel();
-      
+  
       const utterance = new SpeechSynthesisUtterance(text);
       const voices = speechSynthesisRef.current.getVoices();
-      
-      // Try to find a female voice
-      const femaleVoice = voices.find(voice => 
-        voice.lang.includes(isMalayalam ? 'ml' : 'en') && 
-        voice.name.toLowerCase().includes('female')
-      ) || voices.find(voice => 
-        voice.lang.includes('en') && 
-        voice.name.toLowerCase().includes('female')
+  
+      const femaleVoice = voices.find(
+        (voice) =>
+          voice.lang.includes(isMalayalam ? 'ml' : 'en') &&
+          voice.name.toLowerCase().includes('female')
       ) || voices[0];
-
+  
       utterance.voice = femaleVoice;
-      utterance.pitch = 1.2; // Higher pitch for more feminine voice
+      utterance.pitch = 1.2;
       utterance.rate = 1.0;
-      
+  
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
-
+  
       speechSynthesisRef.current.speak(utterance);
     }
   };
-
+  
   const toggleSpeech = () => {
     if (isSpeaking) {
       speechSynthesisRef.current.cancel();
@@ -94,7 +104,7 @@ function Swayam() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm; codecs=opus',
+        mimeType: "audio/webm; codecs=opus",
       });
 
       audioChunksRef.current = [];
@@ -106,15 +116,17 @@ function Swayam() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
         await handleVoiceInput(audioBlob);
       };
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (error) {
-      console.error('Error accessing microphone:', error);
-      alert('Please enable microphone access to use this feature.');
+      console.error("Error accessing microphone:", error);
+      alert("Please enable microphone access to use this feature.");
     }
   };
 
@@ -129,31 +141,34 @@ function Swayam() {
     setIsLoading(true);
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.ogg');
+      formData.append("audio", audioBlob, "recording.ogg");
 
-      const speechResponse = await fetch('http://localhost:5001/api/speech-to-text', {
-        method: 'POST',
-        body: formData,
-      });
+      const speechResponse = await fetch(
+        "http://localhost:5001/api/speech-to-text",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const speechData = await speechResponse.json();
 
       if (!speechData.malayalamText) {
-        throw new Error('Speech-to-text conversion returned empty result');
+        throw new Error("Speech-to-text conversion returned empty result");
       }
 
       setMessages((prev) => [
         ...prev,
         {
-          role: 'user',
+          role: "user",
           content: speechData.malayalamText,
         },
       ]);
 
       await sendMessageToAI(speechData.malayalamText);
     } catch (error) {
-      console.error('Error processing voice input:', error.message);
-      alert('Failed to process voice input. Please try again.');
+      console.error("Error processing voice input:", error.message);
+      alert("Failed to process voice input. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -161,9 +176,9 @@ function Swayam() {
 
   const sendMessageToAI = async (message) => {
     try {
-      const response = await fetch('http://localhost:5001/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("http://localhost:5001/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, needsMalayalamResponse: true }),
       });
 
@@ -172,13 +187,13 @@ function Swayam() {
       setMessages((prev) => [
         ...prev,
         {
-          role: 'assistant',
+          role: "assistant",
           content: chatData.malayalamText || chatData.englishText,
         },
       ]);
     } catch (error) {
-      console.error('Error sending message to AI:', error.message);
-      alert('Failed to process the message. Please try again.');
+      console.error("Error sending message to AI:", error.message);
+      alert("Failed to process the message. Please try again.");
     }
   };
 
@@ -186,33 +201,30 @@ function Swayam() {
     if (!inputMessage.trim()) return;
 
     const userMessage = inputMessage;
-    setInputMessage('');
+    setInputMessage("");
     setIsLoading(true);
 
     try {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'user', content: userMessage },
-      ]);
+      setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
 
       await sendMessageToAI(userMessage);
     } catch (error) {
-      console.error('Error:', error.message);
-      alert('Failed to process the message. Please try again.');
+      console.error("Error:", error.message);
+      alert("Failed to process the message. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex w-full h-[85vh]">
+    <div className="flex h-[85vh] w-full">
       {/* Left Side - Chat UI */}
-      <div className="w-1/2 bg-white border-r p-6 flex flex-col">
-        <div className="flex justify-end mb-2">
+      <div className="flex w-1/2 flex-col border-r bg-white p-6">
+        <div className="mb-2 flex justify-end">
           <button
             onClick={toggleSpeech}
-            className={`p-2 rounded-lg ${
-              speechEnabled ? 'bg-green-100' : 'bg-gray-100'
+            className={`rounded-lg p-2 ${
+              speechEnabled ? "bg-green-100" : "bg-gray-100"
             }`}
           >
             {speechEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
@@ -220,10 +232,10 @@ function Swayam() {
         </div>
         <div
           ref={chatContainerRef}
-          className="flex-grow bg-gray-50 rounded-xl mb-4 p-4 overflow-y-auto"
+          className="mb-4 flex-grow overflow-y-auto rounded-xl bg-gray-50 p-4"
         >
           {messages.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-gray-500">
+            <div className="flex h-full items-center justify-center text-gray-500">
               Start a conversation in Malayalam or English!
             </div>
           ) : (
@@ -231,13 +243,15 @@ function Swayam() {
               {messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
                   <div
                     className={`max-w-[70%] rounded-xl px-4 py-2 ${
-                      msg.role === 'user'
-                        ? 'bg-[rgba(67,24,255,0.85)] text-white'
-                        : 'bg-gray-100'
+                      msg.role === "user"
+                        ? "bg-[rgba(67,24,255,0.85)] text-white"
+                        : "bg-gray-100"
                     }`}
                   >
                     {msg.content}
@@ -252,7 +266,9 @@ function Swayam() {
         <div className="flex gap-2">
           <button
             onClick={isRecording ? stopRecording : startRecording}
-            className={`p-3 rounded-xl ${isRecording ? 'bg-red-500' : 'bg-gray-100'}`}
+            className={`rounded-xl p-3 ${
+              isRecording ? "bg-red-500" : "bg-gray-100"
+            }`}
           >
             {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
@@ -261,11 +277,11 @@ function Swayam() {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-grow border rounded-lg px-3 py-2"
+            className="flex-grow rounded-lg border px-3 py-2"
           />
           <button
             onClick={sendMessage}
-            className="p-3 bg-[rgba(67,24,255,0.85)] text-white rounded-lg"
+            className="rounded-lg bg-[rgba(67,24,255,0.85)] p-3 text-white"
           >
             <Send size={20} />
           </button>
@@ -273,12 +289,12 @@ function Swayam() {
       </div>
 
       {/* Right Side */}
-      <div className="w-1/2 bg-gray-50 flex items-center justify-center">
+      <div className="flex w-1/2 items-center justify-center bg-gray-50">
         <img
           src={isRecording || isSpeaking ? SwayamGif : SwayamImage}
           alt="AI Assistant"
-          style={{borderRadius: '50%', height:'400px', width:'400px'}}
-          className="max-w-full max-h-[80%] object-contain"
+          style={{ borderRadius: "50%", height: "400px", width: "400px" }}
+          className="max-h-[80%] max-w-full object-contain"
         />
       </div>
     </div>

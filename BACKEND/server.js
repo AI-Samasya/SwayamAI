@@ -176,10 +176,15 @@ const fileUpload = require('express-fileupload');
 require('dotenv').config();
 const FormData = require('form-data');
 
-
+const textToSpeech = require('@google-cloud/text-to-speech');
+const util = require('util');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const path = require('path');
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = path.join(__dirname, 'config', 'usmlechats-348107da3276.json');
+console.log(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+const client = new textToSpeech.TextToSpeechClient();
 
 const app = express();
 
@@ -313,6 +318,8 @@ app.post('/api/speech-to-text', async (req, res) => {
 });
 
 
+
+
 // Chat Endpoint
 app.post('/api/chat', async (req, res) => {
   try {
@@ -327,8 +334,29 @@ app.post('/api/chat', async (req, res) => {
       messages: [{ role: 'user', content: message }],
     });
 
+    const malayalamText = completion.choices[0].message.content;
+
+    // Google TTS request for Malayalam
+    const ttsRequest = {
+      input: { text: malayalamText },
+      voice: {
+        languageCode: 'ml-IN', // Malayalam (India)
+        name: 'ml-IN-Standard-A', // Specific voice
+      },
+      audioConfig: {
+        audioEncoding: 'MP3', // Audio format
+      },
+    };
+
+    // Synthesize speech
+    const [response] = await client.synthesizeSpeech(ttsRequest);
+
+    // Convert audio content to base64
+    const audioBase64 = Buffer.from(response.audioContent).toString('base64');
+
     res.json({
-      englishText: completion.choices[0].message.content,
+      malayalamText,
+      audioUrl: `data:audio/mp3;base64,${audioBase64}`,
     });
   } catch (error) {
     console.error('Error in Chat:', error.response?.data || error.message);

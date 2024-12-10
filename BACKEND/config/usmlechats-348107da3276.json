@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "usmlechats",
+  "private_key_id": "348107da3276f7e0e0de1bcc777cf525a93dd46c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCi8tX6SBJP/TNZ\nNzhJZK3BurxJFzNFgT4HUh2lxEgCcvuhla6hnNbWLFKuNUtoww9DREDdKjWdyAjO\ng1Jxe6ZGZezWvz3CyNKQgDH6d4PJEKHWtw5SLSKhlLtOBUOUdCNKbRNo7ZGslrWg\nol+VbGLvWx5a72NAA//Cx6V5kE+GdZpOCk/u/ZKoK8N16gpqP7W2wX8wZg9mFOny\nL+pIE/B3mZyp85rwg8TN49b+kxQXlVpsdSjEgLjKT/2hvI48+E7acOzNNqlaOA2b\n4CvMM4PcNnydADQ6WBjEAdGUmgUi+0WaHTKPPBi4oRAnHhmj5ur2M/jZp0IwCofP\nQe/x6shRAgMBAAECggEAAcrLiuLBpAEttpl8FDKRrRCX6YxIk0cf0ezK4eJBK7KG\nc5LpEy+Q0Iid3PsKrUhLIeF3GF4Frb3GR9Jh7ov+Z1/Pm9ajbNtqLw5GsaTtQ7tC\nTGsO/6n6nrq7Pj+iLD8EWr+Z99l4QX59P049E7BxfIVACQTNzqWjA0o21uajbHmL\nwDdcpD4aFT1b1kLlxJkCjbYSrvDPWD+FMwMv1zDwT6dc7nmqI4lt7HAx5yh+TO7Z\nThDuHoCh2pBsF6mi95pEHC5MpoPV5+ECgRA/gkX/IS24M8eRmgMal/Kcxjo06k0L\nGZJSB8Dz19h9/JXVjvmvA9vzp01RT8i6C4RxmMuTwQKBgQDX3zJDhYUvfwTSCMLM\nTlWr5Hse9Yz2vaGCJux23Mjl4ep3Zqhq7SnHEm0FF5lOXOavmzdBEZeEXgaHQ5Vp\n8Fmm8B0cyFvAXWLyecJwh3ukhXvUbN2iHSaq2WNonnqprGIoQNMFYd+H/9Cv52LX\ndjY2YeQFD+sUy+qRpXNzetIyLQKBgQDBPScEB1Lopqaz58cyWttH7ncbHFeTBp3L\ned2SZZ4vBuIUsuL6dE3Su9kmO+51GSxPSXyhuHf+uVRzx82PQoV4cv1tIxWTSDpD\nBv+x2VnlUHX5xNDRxAKd/KiqlL59YOCAbvKFqC6t/OLDBvgnLs/SJic1+I428b/Y\nPjt644AZNQKBgQCVvLEt2ujmaDHcyszsUI3mfMbWU7ci06i7EerGDCGiK5Gqnt/F\nw5pOBr7uYE8r5w7w0jaCgQRbgaj/nGaApIJbZISdGXFjPqPK06CG08N0/E5Hq/gU\nYioXKlFlGUC2fudbSpPVUO1vdYe47ERIdivmjwJObJtAwq2Dt4McoB47RQKBgHNf\nqKDOIqFHhvaZJySYfJ4Y8cIdDOh6pdHsA++5flWDnY5QNBbnQ+PTRlZ+p+QAUKVS\nMfh4pCRQ0OyD2eZ0CC6fMVJtBR+3mxmT3yx3oiW5AYdMDIWBqzJavPWD86v2IHRu\nSZyliqFVAKsCyTzTxT8qinS932NMuYdJuMepdz0VAoGAfu0bAj2P9homVMNlYJOs\n70q8WcOrKIJc7KNPM+qamtUWrh6MugvaBhc2Snu3wQV2koDROSS4ASE7G6XhRoq1\nKjz7rmM9di0vHkHD/HSr5s+kO7ivMR0J67vaOFvIs84OrTqm0mfDTC6Ukn8qgzMU\nH82bBxt/JZBaR2JfTF3Sfqg=\n-----END PRIVATE KEY-----\n",
+  "client_email": "malayalam-tts@usmlechats.iam.gserviceaccount.com",
+  "client_id": "105179098859169636894",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/malayalam-tts%40usmlechats.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
