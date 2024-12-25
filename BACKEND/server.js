@@ -197,10 +197,76 @@ app.use(fileUpload());
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+
+const MAX_TOKENS = 16000; // Set your max token limit
+const conversationHistory = []; // Store conversation history
+
+// Function to estimate token count (simplified version)
+const estimateTokens = (text) => {
+  // Rough token estimation, OpenAI uses a more accurate method
+  return text.split(' ').length;
+};
+
+// Function to trim conversation history based on token count
+const trimConversationHistory = () => {
+  let totalTokens = conversationHistory.reduce((acc, msg) => acc + estimateTokens(msg.content), 0);
+
+  // Trim conversation history if the total tokens exceed the limit
+  while (totalTokens > MAX_TOKENS && conversationHistory.length > 1) {
+    // Remove the oldest message
+    conversationHistory.shift();
+    totalTokens = conversationHistory.reduce((acc, msg) => acc + estimateTokens(msg.content), 0);
+  }
+};
+
+app.post('/api/chats', async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    // Add user message to history
+    conversationHistory.push({
+      role: 'user',
+      content: message
+    });
+
+    // Trim conversation history to avoid exceeding token limits
+    trimConversationHistory();
+
+    // Get response from OpenAI
+    const completion = await openai.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'Generate content so that even ADHD people can understand' },
+        ...conversationHistory
+      ],
+      model: 'gpt-3.5-turbo',
+    });
+
+    const aiResponse = completion.choices[0].message.content;
+
+    // Add AI response to history
+    conversationHistory.push({
+      role: 'assistant',
+      content: aiResponse
+    });
+
+    res.json({ message: aiResponse });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
+
+
+
 const tempDir = path.join(__dirname, 'temp');
 if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
+
+
+
 
 // Reverie API configuration
 const REVERIE_API_KEY = process.env.REVERIE_API_KEY;
@@ -316,6 +382,10 @@ app.post('/api/speech-to-text', async (req, res) => {
     res.status(500).json({ error: 'Speech-to-text conversion failed' });
   }
 });
+
+
+
+
 
 
 

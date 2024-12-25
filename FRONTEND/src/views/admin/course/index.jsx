@@ -308,7 +308,7 @@ const Course = () => {
   const generateSections = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5001/api/chat", {
+      const response = await fetch("http://localhost:5001/api/chats", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -358,7 +358,7 @@ const Course = () => {
       });
 
       // Fetch detailed content
-      const contentResponse = await fetch("http://localhost:5001/api/chat", {
+      const contentResponse = await fetch("http://localhost:5001/api/chats", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
