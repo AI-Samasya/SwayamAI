@@ -1,173 +1,3 @@
-// const express = require('express');
-// const cors = require('cors');
-// const axios = require('axios');
-// const OpenAI = require('openai');
-// const fileUpload = require('express-fileupload');
-// require('dotenv').config();
-
-// const app = express();
-
-// app.use(cors());
-// app.use(express.json());
-// app.use(fileUpload());
-
-// const openai = new OpenAI({
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
-
-// // Reverie API configuration
-// const REVERIE_API_KEY = process.env.REVERIE_API_KEY;
-// const REVERIE_APP_ID = process.env.REVERIE_APP_ID;
-// const REVERIE_API_URL = 'https://revapi.reverieinc.com';
-
-// // Speech-to-Text endpoint
-// app.post('/api/speech-to-text', async (req, res) => {
-//   try {
-//     if (!req.files || !req.files.audio) {
-//       return res.status(400).json({ error: 'No audio file uploaded' });
-//     }
-
-//     const audioFile = req.files.audio;
-
-//     const formData = new FormData();
-//     formData.append('audio_file', audioFile.data, audioFile.name);
-
-//     const response = await axios.post(`${REVERIE_API_URL}/upload`, formData, {
-//       headers: {
-//         'REV-API-KEY': REVERIE_API_KEY,
-//         'REV-APP-ID': REVERIE_APP_ID,
-//         'REV-APPNAME': 'stt_batch',
-//         'src_lang': 'ml',
-//         'domain': 'generic',
-//         ...formData.getHeaders(),
-//       },
-//     });
-
-//     const jobId = response.data.job_id;
-
-//     // Polling for the transcription result
-//     let transcription = '';
-//     while (true) {
-//       const result = await axios.get(`${REVERIE_API_URL}/transcript`, {
-//         headers: {
-//           'REV-API-KEY': REVERIE_API_KEY,
-//           'REV-APP-ID': REVERIE_APP_ID,
-//           'REV-APPNAME': 'stt_batch',
-//         },
-//         params: {
-//           job_id: jobId,
-//         },
-//       });
-
-//       if (result.data.code === '000') {
-//         transcription = result.data.result[0].transcript;
-//         break;
-//       } else if (result.data.code === '005') {
-//         return res.status(500).json({ error: 'Transcription failed' });
-//       }
-
-//       await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for 2 seconds before polling again
-//     }
-
-//     // Translate Malayalam text to English
-//     const translationResponse = await axios.post(
-//       `${REVERIE_API_URL}/`,
-//       {
-//         text: transcription,
-//         source_language: 'ml',
-//         target_language: 'en',
-//       },
-//       {
-//         headers: {
-//           'REV-API-KEY': REVERIE_API_KEY,
-//           'REV-APP-ID': REVERIE_APP_ID,
-//           'REV-APPNAME': 'localization',
-//           'Content-Type': 'application/json',
-//         },
-//       }
-//     );
-
-//     res.json({
-//       malayalamText: transcription,
-//       englishText: translationResponse.data.responseList[0].outString,
-//     });
-//   } catch (error) {
-//     console.error('Error:', error.response ? error.response.data : error.message);
-//     res.status(500).json({ error: 'Speech-to-text conversion failed' });
-//   }
-// });
-
-// // Chat endpoint
-// app.post('/api/chat', async (req, res) => {
-//   try {
-//     const { message, needsMalayalamResponse } = req.body;
-
-//     const completion = await openai.chat.completions.create({
-//       messages: [{ role: 'user', content: message }],
-//       model: 'gpt-3.5-turbo',
-//     });
-
-//     const englishResponse = completion.choices[0].message.content;
-
-//     if (needsMalayalamResponse) {
-//       // Translate English response to Malayalam
-//       const translationResponse = await axios.post(
-//         `${REVERIE_API_URL}/`,
-//         {
-//           text: englishResponse,
-//           source_language: 'en',
-//           target_language: 'ml',
-//         },
-//         {
-//           headers: {
-//             'REV-API-KEY': REVERIE_API_KEY,
-//             'REV-APP-ID': REVERIE_APP_ID,
-//             'REV-APPNAME': 'localization',
-//             'Content-Type': 'application/json',
-//           },
-//         }
-//       );
-
-//       // Get Malayalam audio for the translated text
-//       const audioResponse = await axios.post(
-//         `${REVERIE_API_URL}/`,
-//         {
-//           text: translationResponse.data.responseList[0].outString,
-//         },
-//         {
-//           headers: {
-//             'REV-API-KEY': REVERIE_API_KEY,
-//             'REV-APP-ID': REVERIE_APP_ID,
-//             'REV-APPNAME': 'tts',
-//             speaker: 'ml_male', // Specify the desired speaker
-//             'Content-Type': 'application/json',
-//             Accept: 'audio/wav',
-//           },
-//           responseType: 'arraybuffer',
-//         }
-//       );
-
-//       res.json({
-//         englishText: englishResponse,
-//         malayalamText: translationResponse.data.responseList[0].outString,
-//         audioUrl: `data:audio/wav;base64,${Buffer.from(audioResponse.data).toString('base64')}`,
-//       });
-//     } else {
-//       res.json({
-//         englishText: englishResponse,
-//       });
-//     }
-//   } catch (error) {
-//     console.error('Error:', error.response ? error.response.data : error.message);
-//     res.status(500).json({ error: 'Chat processing failed' });
-//   }
-// });
-
-// const PORT = process.env.PORT || 5001;
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
-
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -182,7 +12,7 @@ const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const path = require('path');
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS = path.join(__dirname, 'config', 'usmlechats-348107da3276.json');
+process.env.GOOGLE_APPLICATION_CREDENTIALS = path.join(__dirname, 'config', 'usmlechats-05fece67ad80.json');
 console.log(process.env.GOOGLE_APPLICATION_CREDENTIALS);
 const client = new textToSpeech.TextToSpeechClient();
 
@@ -359,7 +189,7 @@ app.post('/api/speech-to-text', async (req, res) => {
       'REV-API-KEY': '185506e1798c51e340111708f00d3636db1902ba',
       'REV-APP-ID': 'com.adbit.tesa',
       'REV-APPNAME': 'stt_file',
-      'src_lang': 'ml', // Malayalam language code
+      'src_lang': 'ml', 
       'domain': 'generic',
     };
 
@@ -384,12 +214,6 @@ app.post('/api/speech-to-text', async (req, res) => {
 });
 
 
-
-
-
-
-
-
 // Chat Endpoint
 app.post('/api/chat', async (req, res) => {
   try {
@@ -410,8 +234,8 @@ app.post('/api/chat', async (req, res) => {
     const ttsRequest = {
       input: { text: malayalamText },
       voice: {
-        languageCode: 'ml-IN', // Malayalam (India)
-        name: 'ml-IN-Standard-A', // Specific voice
+        languageCode: 'ml-IN', 
+        name: 'ml-IN-Standard-A', 
       },
       audioConfig: {
         audioEncoding: 'MP3', // Audio format
