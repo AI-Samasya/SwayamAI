@@ -28,6 +28,7 @@ import {
 import { BsRobot } from "react-icons/bs";
 
 import { PiNotification } from "react-icons/pi";
+import ExtensionMarketplace from "views/extension";
 
 
 
@@ -124,6 +125,14 @@ const routes = [
     path: "profile",
     icon: <MdPerson className="h-6 w-6" />,
     component: <Profile />,
+    showInMenu: true,
+  },
+  {
+    name: "Extensions",
+    layout: "/admin",
+    path: "ex",
+    icon: <MdPerson className="h-6 w-6" />,
+    component: <ExtensionMarketplace />,
     showInMenu: true,
   },
   {

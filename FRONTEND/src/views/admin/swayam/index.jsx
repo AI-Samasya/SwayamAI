@@ -16,6 +16,12 @@ function Swayam() {
   const chatContainerRef = useRef(null);
   const speechSynthesisRef = useRef(window.speechSynthesis);
 
+  const [selectedLanguage, setSelectedLanguage] = useState("ml");
+
+  const handleLanguageChange = (e) => {
+    setSelectedLanguage(e.target.value);
+  };
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
@@ -38,59 +44,60 @@ function Swayam() {
   const speakText = async (text, isMalayalam) => {
     if (isMalayalam) {
       try {
-        const response = await fetch('http://localhost:5001/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("http://localhost:5001/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text }),
         });
-  
+
         const data = await response.json();
-  
+
         if (!data.audioUrl) {
-          throw new Error('No audio URL received from backend');
+          throw new Error("No audio URL received from backend");
         }
-  
+
         const audio = new Audio(data.audioUrl);
-  
+
         audio.onplay = () => setIsSpeaking(true);
         audio.onended = () => setIsSpeaking(false);
         audio.onerror = () => {
           setIsSpeaking(false);
-          console.error('Error playing TTS audio');
+          console.error("Error playing TTS audio");
         };
-  
+
         await audio.play();
       } catch (error) {
-        console.error('Failed to use TTS service:', error.message);
+        console.error("Failed to use TTS service:", error.message);
       }
     } else {
       fallbackToWebSpeech();
     }
-  
+
     function fallbackToWebSpeech() {
       speechSynthesisRef.current.cancel();
-  
+
       const utterance = new SpeechSynthesisUtterance(text);
       const voices = speechSynthesisRef.current.getVoices();
-  
-      const femaleVoice = voices.find(
-        (voice) =>
-          voice.lang.includes(isMalayalam ? 'ml' : 'en') &&
-          voice.name.toLowerCase().includes('female')
-      ) || voices[0];
-  
+
+      const femaleVoice =
+        voices.find(
+          (voice) =>
+            voice.lang.includes(isMalayalam ? "ml" : "en") &&
+            voice.name.toLowerCase().includes("female")
+        ) || voices[0];
+
       utterance.voice = femaleVoice;
       utterance.pitch = 1.2;
       utterance.rate = 1.0;
-  
+
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
-  
+
       speechSynthesisRef.current.speak(utterance);
     }
   };
-  
+
   const toggleSpeech = () => {
     if (isSpeaking) {
       speechSynthesisRef.current.cancel();
@@ -142,7 +149,8 @@ function Swayam() {
     try {
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.ogg");
-
+      formData.append("language", selectedLanguage); // Add selected language
+  
       const speechResponse = await fetch(
         "http://localhost:5001/api/speech-to-text",
         {
@@ -150,22 +158,22 @@ function Swayam() {
           body: formData,
         }
       );
-
+  
       const speechData = await speechResponse.json();
-
-      if (!speechData.malayalamText) {
+  
+      if (!speechData.text) {
         throw new Error("Speech-to-text conversion returned empty result");
       }
-
+  
       setMessages((prev) => [
         ...prev,
         {
           role: "user",
-          content: speechData.malayalamText,
+          content: speechData.text,
         },
       ]);
-
-      await sendMessageToAI(speechData.malayalamText);
+  
+      await sendMessageToAI(speechData.text);
     } catch (error) {
       console.error("Error processing voice input:", error.message);
       alert("Failed to process voice input. Please try again.");
@@ -173,6 +181,30 @@ function Swayam() {
       setIsLoading(false);
     }
   };
+  
+
+  // const sendMessageToAI = async (message) => {
+  //   try {
+  //     const response = await fetch("http://localhost:5001/api/chat", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ message, needsMalayalamResponse: true }),
+  //     });
+
+  //     const chatData = await response.json();
+
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       {
+  //         role: "assistant",
+  //         content: chatData.malayalamText || chatData.englishText,
+  //       },
+  //     ]);
+  //   } catch (error) {
+  //     console.error("Error sending message to AI:", error.message);
+  //     alert("Failed to process the message. Please try again.");
+  //   }
+  // };
 
   const sendMessageToAI = async (message) => {
     try {
@@ -181,9 +213,9 @@ function Swayam() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, needsMalayalamResponse: true }),
       });
-
+  
       const chatData = await response.json();
-
+  
       setMessages((prev) => [
         ...prev,
         {
@@ -196,6 +228,7 @@ function Swayam() {
       alert("Failed to process the message. Please try again.");
     }
   };
+  
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -221,6 +254,23 @@ function Swayam() {
       {/* Left Side - Chat UI */}
       <div className="flex w-1/2 flex-col border-r bg-white p-6">
         <div className="mb-2 flex justify-end">
+          {/** LANGAUGE SECTION ADDED */}
+          <div className="mb-4 flex items-center justify-end gap-2">
+  <label htmlFor="language-select" className="text-sm font-medium">
+    Language:
+  </label>
+  <select
+    id="language-select"
+    value={selectedLanguage}
+    onChange={(e) => setSelectedLanguage(e.target.value)}
+    className="rounded border px-2 py-1"
+  >
+    <option value="ml">Malayalam</option>
+    <option value="te">Telugu</option>
+  </select>
+</div>
+
+
           <button
             onClick={toggleSpeech}
             className={`rounded-lg p-2 ${

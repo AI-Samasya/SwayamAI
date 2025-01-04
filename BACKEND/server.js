@@ -171,57 +171,64 @@ app.get('/api/process-latest-audio', async (req, res) => {
 app.post('/api/speech-to-text', async (req, res) => {
   try {
     if (!req.files || !req.files.audio) {
+      console.error("No audio file uploaded");
       return res.status(400).json({ error: 'No audio file uploaded' });
     }
 
-    // Save uploaded file to temp directory
+    const { language } = req.body; // Expect language code like 'ml' or 'te'
+    if (!['ml', 'te'].includes(language)) {
+      console.error("Unsupported language:", language);
+      return res.status(400).json({ error: 'Unsupported language' });
+    }
+
     const audioFile = req.files.audio;
     const inputPath = path.join(tempDir, `input_${Date.now()}.ogg`);
     fs.writeFileSync(inputPath, audioFile.data);
 
-    console.log('Audio file saved at:', inputPath);
+    console.log("Audio file saved for processing at:", inputPath);
 
-    // Prepare FormData for Reverie API
     const formData = new FormData();
-    formData.append('audio_file', fs.createReadStream(inputPath)); // Attach the saved file
+    formData.append("audio_file", fs.createReadStream(inputPath));
+    formData.append("src_lang", language);
+    formData.append("domain", "generic");
 
-    const headers = {
-      ...formData.getHeaders(),
-      'REV-API-KEY': '185506e1798c51e340111708f00d3636db1902ba',
-      'REV-APP-ID': 'com.adbit.tesa',
-      'REV-APPNAME': 'stt_file',
-      'src_lang': 'ml', 
-      'domain': 'generic',
-    };
+    const response = await axios.post('https://revapi.reverieinc.com/', formData, {
+      headers: {
+        ...formData.getHeaders(),
+        'REV-API-KEY': process.env.REVERIE_API_KEY,
+        'REV-APP-ID': process.env.REVERIE_APP_ID,
+        'REV-APPNAME': 'stt_file',
+      },
+    });
 
-    // Send request to Reverie API
-    const response = await axios.post('https://revapi.reverieinc.com/', formData, { headers });
+    fs.unlinkSync(inputPath);
 
-    console.log('Reverie API Response:', response.data);
+    console.log("Reverie API Response:", response.data);
 
-    if (!response.data.success) {
-      throw new Error(`Reverie API Error: ${response.data.cause}`);
+    if (!response.data.text) {
+      throw new Error("Speech-to-text conversion returned empty result");
     }
 
-    // Respond with the transcribed text
-    res.json({ malayalamText: response.data.text });
-
-    // Clean up the saved file
-    fs.unlinkSync(inputPath);
+    res.json({ text: response.data.text });
   } catch (error) {
-    console.error('Error in Speech-to-Text:', error.message);
+    console.error("Error in Speech-to-Text:", error.message);
     res.status(500).json({ error: 'Speech-to-text conversion failed' });
   }
 });
 
 
+
 // Chat Endpoint
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, language } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Invalid message content' });
+    }
+
+    if (!['ml', 'te'].includes(language)) {
+      return res.status(400).json({ error: 'Unsupported language' });
     }
 
     const completion = await openai.chat.completions.create({
@@ -229,35 +236,37 @@ app.post('/api/chat', async (req, res) => {
       messages: [{ role: 'user', content: message }],
     });
 
-    const malayalamText = completion.choices[0].message.content;
+    const responseText = completion.choices[0].message.content;
 
-    // Google TTS request for Malayalam
+    const languageCodeMap = {
+      ml: 'ml-IN',
+      te: 'te-IN',
+    };
+
     const ttsRequest = {
-      input: { text: malayalamText },
+      input: { text: responseText },
       voice: {
-        languageCode: 'ml-IN', 
-        name: 'ml-IN-Standard-A', 
+        languageCode: languageCodeMap[language],
+        name: `${languageCodeMap[language]}-Standard-A`,
       },
       audioConfig: {
-        audioEncoding: 'MP3', // Audio format
+        audioEncoding: 'MP3',
       },
     };
 
-    // Synthesize speech
-    const [response] = await client.synthesizeSpeech(ttsRequest);
-
-    // Convert audio content to base64
-    const audioBase64 = Buffer.from(response.audioContent).toString('base64');
+    const [ttsResponse] = await client.synthesizeSpeech(ttsRequest);
+    const audioBase64 = Buffer.from(ttsResponse.audioContent).toString('base64');
 
     res.json({
-      malayalamText,
+      text: responseText,
       audioUrl: `data:audio/mp3;base64,${audioBase64}`,
     });
   } catch (error) {
-    console.error('Error in Chat:', error.response?.data || error.message);
+    console.error('Error in Chat:', error.message);
     res.status(500).json({ error: 'Chat processing failed' });
   }
 });
+
 
 
 app.get('/api/process-audio', async (req, res) => {
