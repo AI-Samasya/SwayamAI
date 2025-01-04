@@ -20,6 +20,7 @@ const AuthFlow = () => {
   const [disabilityRange, setDisabilityRange] = useState(50);
   const [newInterest, setNewInterest] = useState("");
   const [selectedInterests, setSelectedInterests] = useState([]);
+  const [selectgard, setSelectedGard] = useState(false);
 
   const [userData, setUserData] = useState({
     fullName: "",
@@ -54,21 +55,36 @@ const AuthFlow = () => {
 
   const handleNextStep = () => {
     if (currentStep === 1) {
-        if (!userData.fullName || !userData.email || !userData.password || !userData.age || !userData.location) {
-            alert("Please fill in all required fields.");
-            return;
-        }
+      if (
+        !userData.fullName ||
+        !userData.email ||
+        !userData.password ||
+        !userData.age ||
+        !userData.location
+      ) {
+        alert("Please fill in all required fields.");
+        return;
+      }
     } else if (currentStep === 2) {
-        // Optionally validate interests
-        if (userData.interests.length === 0) {
-            alert("Please select at least one interest.");
-            return;
-        }
+      // Optionally validate interests
+      if (userData.interests.length === 0) {
+        alert("Please select at least one interest.");
+        return;
+      }
     }
-    
-    setCurrentStep(currentStep + 1);
-};
 
+    setCurrentStep(currentStep + 1);
+  };
+
+  const handleGuardian = () => {
+    setSelectedGard(true);
+    handleAuthOption("register");
+  };
+
+  const handlestudentaccount = () => {
+    setSelectedGard(false);
+    handleAuthOption("register");
+  };
 
   const handleAuthOption = (option) => {
     setCurrentView(option);
@@ -87,8 +103,8 @@ const AuthFlow = () => {
 
   const handleInputChange = (field, value) => {
     console.log(`Updating ${field} to ${value}`);
-    setUserData(prev => ({ ...prev, [field]: value }));
-};
+    setUserData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleInterestToggle = (interest) => {
     setUserData((prev) => ({
@@ -101,12 +117,13 @@ const AuthFlow = () => {
 
   const handleDisabilitySelection = (disability) => {
     setSelectedDisability(disability); // for UI state
-    setUserData(prev => ({
+    setUserData((prev) => ({
       ...prev,
-      disability: {  // Store the full disability object
+      disability: {
+        // Store the full disability object
         id: disability.id,
-        title: disability.title
-      }
+        title: disability.title,
+      },
     }));
   };
 
@@ -118,14 +135,20 @@ const AuthFlow = () => {
   };
 
   const handleRegisterComplete = () => {
-    if (!userData.fullName || !userData.email || !userData.password || !userData.age || !userData.location) {
-        alert("Please fill all required fields.");
-        return;
+    if (
+      !userData.fullName ||
+      !userData.email ||
+      !userData.password ||
+      !userData.age ||
+      !userData.location
+    ) {
+      alert("Please fill all required fields.");
+      return;
     }
     setIsProcessing(true);
     const finalData = { ...userData, registeredAt: new Date().toISOString() };
     console.log(finalData);
-    localStorage.setItem('userData', JSON.stringify(finalData));
+    localStorage.setItem("userData", JSON.stringify(finalData));
 
     setTimeout(() => {
       // Save complete user data to localStorage
@@ -186,10 +209,16 @@ const AuthFlow = () => {
               Choose how you want to get started!
             </p>
             <button
-              onClick={() => handleAuthOption("register")}
+              onClick={handleGuardian}
               className="linear mb-3 w-full rounded-xl bg-[rgba(67,24,255,0.85)] py-[12px] text-base font-medium text-white transition duration-200 hover:bg-[rgba(67,24,255,0.95)]"
             >
-              Create Account
+              Create Guardian Account
+            </button>
+            <button
+              onClick={handlestudentaccount}
+              className="linear mb-3 w-full rounded-xl bg-[rgba(67,24,255,0.85)] py-[12px] text-base font-medium text-white transition duration-200 hover:bg-[rgba(67,24,255,0.95)]"
+            >
+              Create Student Account
             </button>
             <button
               onClick={() => handleAuthOption("signin")}
@@ -294,6 +323,33 @@ const AuthFlow = () => {
 
                 {currentStep === 1 && (
                   <div className="space-y-4">
+                    {selectgard && (
+                      <>
+                        <InputField
+                          variant="auth"
+                          label="Full Parent name*"
+                          placeholder="Enter your full name"
+                          id="name"
+                          type="text"
+                          value={userData.fullName}
+                          onChange={(e) =>
+                            handleInputChange("fullName", e.target.value)
+                          }
+                        />
+
+                        <InputField
+                          variant="auth"
+                          label="Parent Mobile number*"
+                          placeholder="Enter parent mobile number"
+                          id="name"
+                          type="text"
+                          value={userData.fullName}
+                          onChange={(e) =>
+                            handleInputChange("fullName", e.target.value)
+                          }
+                        />
+                      </>
+                    )}
                     <InputField
                       variant="auth"
                       label="Full Name*"
@@ -407,26 +463,26 @@ const AuthFlow = () => {
                 {currentStep === 3 && (
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                    {disabilities.map((disability) => (
-  <button
-    key={disability.id}
-    className={`rounded-xl border p-4 transition ${
-      selectedDisability?.id === disability.id
-        ? "border-[rgba(67,24,255,0.85)] bg-[rgba(67,24,255,0.1)]"
-        : "hover:border-gray-300"
-    }`}
-    onClick={() => handleDisabilitySelection(disability)}  // Make sure this is being called
-  >
-    <img
-      src={disability.img}
-      alt={disability.title}
-      className="mb-2 h-32 w-full rounded-lg object-cover"
-    />
-    <h4 className="text-center font-medium text-navy-700 dark:text-white">
-      {disability.title}
-    </h4>
-  </button>
-))}
+                      {disabilities.map((disability) => (
+                        <button
+                          key={disability.id}
+                          className={`rounded-xl border p-4 transition ${
+                            selectedDisability?.id === disability.id
+                              ? "border-[rgba(67,24,255,0.85)] bg-[rgba(67,24,255,0.1)]"
+                              : "hover:border-gray-300"
+                          }`}
+                          onClick={() => handleDisabilitySelection(disability)} // Make sure this is being called
+                        >
+                          <img
+                            src={disability.img}
+                            alt={disability.title}
+                            className="mb-2 h-32 w-full rounded-lg object-cover"
+                          />
+                          <h4 className="text-center font-medium text-navy-700 dark:text-white">
+                            {disability.title}
+                          </h4>
+                        </button>
+                      ))}
                     </div>
                     {selectedDisability && (
                       <div className="mt-4 rounded-xl bg-gray-50 p-6">
@@ -473,15 +529,18 @@ const AuthFlow = () => {
                       Previous
                     </button>
                   )}
-                  <button onClick={() => {
-    if (currentStep < 3) {
-        handleNextStep();
-    } else {
-        handleRegisterComplete();
-    }
-}} className="px-6 py-2 bg-[rgba(67,24,255,0.85)] text-white rounded-xl hover:bg-[rgba(67,24,255,0.95)] transition ml-auto">
-    {currentStep === 3 ? 'Complete' : 'Next'}
-</button>
+                  <button
+                    onClick={() => {
+                      if (currentStep < 3) {
+                        handleNextStep();
+                      } else {
+                        handleRegisterComplete();
+                      }
+                    }}
+                    className="ml-auto rounded-xl bg-[rgba(67,24,255,0.85)] px-6 py-2 text-white transition hover:bg-[rgba(67,24,255,0.95)]"
+                  >
+                    {currentStep === 3 ? "Complete" : "Next"}
+                  </button>
                 </div>
               </>
             ) : isProcessing ? (
